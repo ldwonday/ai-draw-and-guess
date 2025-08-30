@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI 你画我猜游戏
 
-## Getting Started
+一个基于Next.js和Gemini API的你画我猜游戏。用户可以在画布上绘画，AI会尝试猜测画的是什么。
 
-First, run the development server:
+## 功能特性
+
+- 实时绘画功能
+- AI图像识别猜测
+- 响应式左右布局设计
+- 清空画布功能
+
+## 技术栈
+
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
+- Gemini API (视觉模型)
+
+## 开始使用
+
+首先，运行开发服务器：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+在浏览器中打开 [http://localhost:3000](http://localhost:3000) 查看结果。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 环境变量
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+在 `.env.local` 文件中设置以下环境变量：
 
-## Learn More
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 部署到Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. 将代码推送到GitHub仓库
+2. 在[Vercel](https://vercel.com)上创建新项目
+3. 连接你的GitHub仓库
+4. 在Vercel项目设置中添加环境变量：
+   - `GEMINI_API_KEY`: 你的Gemini API密钥
+5. 部署项目
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 学习更多
 
-## Deploy on Vercel
+要了解更多关于Next.js的信息，请查看以下资源：
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [Next.js Documentation](https://nextjs.org/docs) - 了解Next.js特性和API。
+- [Learn Next.js](https://nextjs.org/learn) - 交互式Next.js教程。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+你可以查看 [Next.js GitHub repository](https://github.com/vercel/next.js) - 欢迎反馈和贡献！

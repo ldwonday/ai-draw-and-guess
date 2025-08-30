@@ -1,103 +1,211 @@
-import Image from "next/image";
+'use client';
+
+import { useRef, useEffect, useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [lastPoint, setLastPoint] = useState<{x: number; y: number} | null>(null);
+  const [guess, setGuess] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Function to set canvas size based on screen size
+    const setCanvasSize = () => {
+      const maxWidth = window.innerWidth > 1024 ? 600 : window.innerWidth * 0.8;
+      const maxHeight = window.innerHeight * 0.5;
+
+      canvas.width = maxWidth;
+      canvas.height = Math.min(450, maxHeight);
+
+      // Fill with white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    // Set initial canvas size
+    setCanvasSize();
+
+    // Set drawing styles
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000000';
+
+    // Add event listener for window resize
+    window.addEventListener('resize', setCanvasSize);
+
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('resize', setCanvasSize);
+    };
+  }, []);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setIsDrawing(true);
+    setLastPoint({x, y});
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !lastPoint) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    setLastPoint({x, y});
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+    setLastPoint(null);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setGuess('');
+  };
+
+  const guessDrawing = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    setIsLoading(true);
+    try {
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+        });
+      });
+
+      // Send to API for guessing
+      const response = await fetch('/api/guess', {
+        method: 'POST',
+        body: blob,
+        headers: {
+          'Content-Type': 'image/png',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setGuess(data.guess || '无法识别');
+      } else {
+        setGuess('识别失败');
+      }
+    } catch (error) {
+      console.error('Error guessing drawing:', error);
+      setGuess('识别出错');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-indigo-800">AI 你画我猜</h1>
+        <p className="text-center text-gray-600 mb-8">画出你想画的内容，让AI来猜测是什么</p>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* 左侧：画布和控制按钮 */}
+          <div className="lg:w-2/3">
+            <div className="bg-white rounded-xl shadow-lg p-6 h-full">
+              <div className="flex justify-center mb-4">
+                <canvas
+                  ref={canvasRef}
+                  className="border border-gray-300 rounded-lg cursor-crosshair shadow-sm max-w-full h-auto"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+                <button
+                  onClick={clearCanvas}
+                  className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md flex-1"
+                >
+                  清空画布
+                </button>
+                <button
+                  onClick={guessDrawing}
+                  disabled={isLoading}
+                  className={`px-6 py-3 text-white rounded-lg transition-colors shadow-md flex-1 ${
+                    isLoading 
+                      ? 'bg-blue-400 cursor-not-allowed' 
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
+                >
+                  {isLoading ? 'AI 分析中...' : 'AI 猜测'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 右侧：AI猜测结果和游戏说明 */}
+          <div className="lg:w-1/3">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <h2 className="text-xl font-bold mb-4 text-indigo-800">王嘉乐 猜测结果</h2>
+              {guess ? (
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-xl font-semibold text-indigo-700">AI 的猜测: <span className="underline">{guess}</span></p>
+                </div>
+              ) : (
+                <div className="text-center p-4 text-gray-500">
+                  <p>画完后点击&quot;AI 猜测&quot;按钮查看结果</p>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-4 text-indigo-800">游戏说明</h2>
+              <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                <li>在左侧画布上点击并拖动鼠标进行绘画</li>
+                <li>画完后点击&quot;AI 猜测&quot;按钮，让AI识别你的画作</li>
+                <li>点击&quot;清空画布&quot;可以重新开始绘画</li>
+                <li>AI 可能无法准确识别复杂的画作，这很正常</li>
+              </ul>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
