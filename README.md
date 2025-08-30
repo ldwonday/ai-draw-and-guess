@@ -1,11 +1,11 @@
-# AI 你画我猜游戏
+# 王嘉乐 你画我猜游戏
 
-一个基于Next.js和Gemini API的你画我猜游戏。用户可以在画布上绘画，AI会尝试猜测画的是什么。
+一个基于Next.js和Gemini API的你画我猜游戏。用户可以在画布上绘画，王嘉乐会尝试猜测画的是什么。
 
 ## 功能特性
 
 - 实时绘画功能
-- AI图像识别猜测
+- 王嘉乐图像识别猜测
 - 响应式左右布局设计
 - 清空画布功能
 
@@ -43,6 +43,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 4. 在Vercel项目设置中添加环境变量：
    - `GEMINI_API_KEY`: 你的Gemini API密钥
 5. 部署项目
+
+## 静态部署（解决JS/CSS显示为HTML的问题）
+
+为了解决部署后JS和CSS文件显示为HTML内容的问题，项目已经配置为支持静态导出：
+
+1. 运行构建命令：
+   ```bash
+   npm run build
+   ```
+
+2. 构建完成后，静态文件将生成在 `out` 目录中
+
+3. 将 `out` 目录中的所有文件部署到您的静态托管服务
+
+详细信息请查看 [DEPLOYMENT.md](DEPLOYMENT.md) 文件。
 
 ## 学习更多
 
